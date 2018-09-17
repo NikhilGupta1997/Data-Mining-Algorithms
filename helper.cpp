@@ -6,73 +6,34 @@
 #include <vector>
 #include <string>
 #include <time.h>
+#include "helper.h"
 
 using namespace std;
 
-typedef float coord;
+void CSVRow::readNextRow(istream& str) {
+    string line;
+    getline(str, line);
+    stringstream lineStream(line);
+    string cell;
 
-class CSVRow {
-  private:
-    vector<coord> data;
-
-  public:
-    coord const& operator[](size_t index) const {
-        return data[index];
+    data.clear();
+    while(std::getline(lineStream, cell, ' ')) {
+        data.push_back(stof(cell));
     }
+}
 
-    size_t size() const {
-        return data.size();
-    }
+void PointData::parseData(string filename) {
+	std::ifstream file(filename);
 
-    vector<coord> val() const {
-    	return data;
-    }
+	CSVRow row;
+	while(file >> row) {
+	    data.push_back(row.val());
+	}
+}
 
-    void readNextRow(istream& str) {
-        string line;
-        getline(str, line);
-        stringstream lineStream(line);
-        string cell;
-
-        data.clear();
-        while(std::getline(lineStream, cell, ' ')) {
-            data.push_back(stof(cell));
-        }
-    }
-};
-
-istream& operator>>(istream& str, CSVRow& data) {
-    data.readNextRow(str);
-    return str;
-} 
-
-class PointData {
-  private:
-  	vector< vector<coord> > data;
-
-  public:
-  	PointData(string filename) {
-  		parseData(filename);
-  	}
-
-  	vector< vector<coord> > val() const {
-    	return data;
-    }
-
-  	void parseData(string filename) {
-  		std::ifstream file(filename);
-
-	    CSVRow row;
-	    while(file >> row) {
-	        data.push_back(row.val());
-	    }
-  	}
-};
-
-int main() {
-    PointData cluster("input.txt");
-    for(auto val : cluster.val()) {
-    	for (auto it : val) {
+void PointData::printData() {
+	for(auto ele : data) {
+    	for (auto it : ele) {
     		cout << it << " ";
     	}
     	cout << endl;
