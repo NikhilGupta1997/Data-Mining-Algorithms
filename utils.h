@@ -28,6 +28,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 
 template <typename T>
 struct PointCloud
@@ -60,16 +61,33 @@ struct PointCloud
 
 };
 
+// template <typename T>
+// void generateRandomPointCloud(PointCloud<T> &point, const size_t N, const T max_range = 10)
+// {
+// 	// Generating Random Point Cloud
+// 	point.pts.resize(N);
+// 	for (size_t i = 0; i < N; i++)
+// 	{
+// 		point.pts[i].x = max_range * (rand() % 1000) / T(1000);
+// 		point.pts[i].y = max_range * (rand() % 1000) / T(1000);
+// 		point.pts[i].z = max_range * (rand() % 1000) / T(1000);
+// 	}
+// }
+
 template <typename T>
-void generateRandomPointCloud(PointCloud<T> &point, const size_t N, const T max_range = 10)
+void addpoints(PointCloud<T> &point, std::vector<std::vector<T>> val)
 {
-	// Generating Random Point Cloud
+	struct Point
+	{
+		T  x,y,z;
+	};
+	int N = val.size();
 	point.pts.resize(N);
 	for (size_t i = 0; i < N; i++)
 	{
-		point.pts[i].x = max_range * (rand() % 1000) / T(1000);
-		point.pts[i].y = max_range * (rand() % 1000) / T(1000);
-		point.pts[i].z = max_range * (rand() % 1000) / T(1000);
+		point.pts[i].x = val[i][0];
+		point.pts[i].y = val[i][1];
+		point.pts[i].z = val[i][2];
 	}
 }
 
@@ -82,7 +100,7 @@ struct PointCloud_Quat
 		T  w,x,y,z;
 	};
 
-	std::vector<Point>  pts;
+	std::vector<Point> pts;
 
 	// Must return the number of data points
 	inline size_t kdtree_get_point_count() const { return pts.size(); }
