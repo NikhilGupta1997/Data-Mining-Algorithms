@@ -1,20 +1,39 @@
+/***********************************************************************
+ * Software License Agreement (BSD License)
+ *
+ * Copyright 2011-2016 Jose Luis Blanco (joseluisblancoc@gmail.com).
+ *   All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *************************************************************************/
+
 #include "nanoflann.hpp"
 #include "utils.h"
 #include <ctime>
 #include <cstdlib>
 #include <iostream>
-#include "helper.cpp"
-#include <time.h> 
-#include <math.h>
-#include <fstream>
-#include <set>
-#include <queue>
 
 using namespace std;
 using namespace nanoflann;
-
-const int NOISE = -1;
-const int UNCLASSIFIED = -2;
 
 template <typename num_t>
 void kdtree_demo(const size_t N)
@@ -82,85 +101,10 @@ void kdtree_demo(const size_t N)
 
 }
 
-class DBScan{
-private:
-	int minPts;
-	double eps;
-	vector<vector<coord>> points;
-	vector<vector<int>> clusters;
-	vector<int> point_to_cluster;
-	set<int> noise;
-
-public:
-	DBScan(int minPts, double eps, string filename){
-		this->minPts = minPts;
-		this->eps = eps;
-		std::ifstream file(filename);
-
-		CSVRow row;
-		while(file >> row) {
-	    	this->points.push_back(row.val());
-		}
-		int size = points.size();
-		point_to_cluster.resize(size, UNCLASSIFIED);
-		int clusterid = 0;
-		// clusters.resize(1);
-		for(int i=0;i<size;i++){
-			if(point_to_cluster[i]==UNCLASSIFIED){
-				if(expand_cluster(i, clusterid))
-					clusterid++;
-			}
-		}
-
-	}
-
-	bool expand_cluster(int index, int clusterid){
-		vector<int> seeds = regionQuery(index, eps, points);
-		if(seeds.size()<minPts){
-			point_to_cluster[index] = NOISE;
-			noise.insert(index);
-		}
-		else{
-			int si = seeds.size();
-			vector<int> clust;
-			queue<int> values;
-			for(int i=0;i<si;i++){
-				int ind = seeds[i];
-				point_to_cluster[ind] = clusterid;
-				clust.push_back(ind);
-				if(ind!=index)
-					values.push(ind);
-			}
-			while(!values.empty()){
-				int ind = values.front();
-				values.pop();
-				vector<int> result = regionQuery(ind, eps, points);
-				for(auto pt:result){
-					int val = point_to_cluster[pt];
-					if(val==UNCLASSIFIED || val==NOISE){
-						if(val==UNCLASSIFIED && pt!=ind)
-							values.push(pt);
-						point_to_cluster[pt] = clusterid;
-						clust.push_back(pt);
-					}
-				}
-			}
-			clusters.push_back(clust);
-		}
-	}
-
-
-
-};
-
-int main(int argc, char **argv){
-	// cout << "You have entered " << argc 
- //         << " arguments:" << "\n"; 
-  
- //    for (int i = 0; i < argc; ++i) 
- //        cout << argv[i] << "\n"; 
-
-    srand(static_cast<unsigned int>(time(nullptr)));
+ int main()
+{
+	// Randomize Seed
+	srand(static_cast<unsigned int>(time(nullptr)));
 	kdtree_demo<float>(4);
 	kdtree_demo<double>(100000);
 	return 0;
