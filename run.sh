@@ -12,6 +12,7 @@ case $1 in
     ;;
     -optics)
     ./optics $2 $3 $4
+    python create_chart.py $3
     shift
     ;;
     *)

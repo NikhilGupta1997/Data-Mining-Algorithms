@@ -90,6 +90,9 @@ int dim1(int minpoints, float epsilon, string filename) {
 								values.push(pt.first);
 							point_to_cluster[pt.first] = clusterid;
 							clust.push_back(pt.first);
+							if(val==NOISE) {
+								noise.erase(pt.first);
+							}
 						}
 					}
 				}
@@ -109,6 +112,10 @@ int dim1(int minpoints, float epsilon, string filename) {
 	  			}
 	  			myfile << "\n";
 	  		}
+	  		for (auto ele : noise) {
+  				myfile << ele << "\n";
+  			}
+  			myfile << "\n";
 			myfile.close();
 	  	}
 
@@ -208,6 +215,9 @@ int dim2(int minpoints, float epsilon, string filename) {
 								values.push(pt.first);
 							point_to_cluster[pt.first] = clusterid;
 							clust.push_back(pt.first);
+							if(val==NOISE) {
+								noise.erase(pt.first);
+							}
 						}
 					}
 				}
@@ -227,6 +237,10 @@ int dim2(int minpoints, float epsilon, string filename) {
 	  			}
 	  			myfile << "\n";
 	  		}
+	  		for (auto ele : noise) {
+  				myfile << ele << "\n";
+  			}
+  			myfile << "\n";
 			myfile.close();
 	  	}
 
@@ -326,6 +340,9 @@ int dim3(int minpoints, float epsilon, string filename) {
 								values.push(pt.first);
 							point_to_cluster[pt.first] = clusterid;
 							clust.push_back(pt.first);
+							if(val==NOISE) {
+								noise.erase(pt.first);
+							}
 						}
 					}
 				}
@@ -345,6 +362,11 @@ int dim3(int minpoints, float epsilon, string filename) {
 	  			}
 	  			myfile << "\n";
 	  		}
+	  		myfile << "#" << clusters.size() << "\n";
+  			for (auto ele : noise) {
+  				myfile << ele << "\n";
+  			}
+  			myfile << "\n";
 			myfile.close();
 	  	}
 
@@ -444,6 +466,9 @@ int dim4(int minpoints, float epsilon, string filename) {
 								values.push(pt.first);
 							point_to_cluster[pt.first] = clusterid;
 							clust.push_back(pt.first);
+							if(val==NOISE) {
+								noise.erase(pt.first);
+							}
 						}
 					}
 				}
@@ -463,6 +488,10 @@ int dim4(int minpoints, float epsilon, string filename) {
 	  			}
 	  			myfile << "\n";
 	  		}
+	  		for (auto ele : noise) {
+  				myfile << ele << "\n";
+  			}
+  			myfile << "\n";
 			myfile.close();
 	  	}
 
@@ -562,6 +591,9 @@ int dim5(int minpoints, float epsilon, string filename) {
 								values.push(pt.first);
 							point_to_cluster[pt.first] = clusterid;
 							clust.push_back(pt.first);
+							if(val==NOISE) {
+								noise.erase(pt.first);
+							}
 						}
 					}
 				}
@@ -581,6 +613,10 @@ int dim5(int minpoints, float epsilon, string filename) {
 	  			}
 	  			myfile << "\n";
 	  		}
+	  		for (auto ele : noise) {
+  				myfile << ele << "\n";
+  			}
+  			myfile << "\n";
 			myfile.close();
 	  	}
 
