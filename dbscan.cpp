@@ -101,6 +101,7 @@ public:
 				}
 			}
 			clusters.push_back(clust);
+			return true;
 		}
 	}
 
