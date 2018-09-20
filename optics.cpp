@@ -31,10 +31,10 @@ vector<std::pair<size_t,float> > radiusSearch(int index, float epsilon, PointClo
 	const float query_pt[3] = {cloud.pts[index].x, cloud.pts[index].y, cloud.pts[index].z};
 	const size_t nMatches = ind.radiusSearch(&query_pt[0], search_radius, ret_matches, params);
 
-	cout << "radiusSearch(): radius=" << search_radius << " -> " << nMatches << " matches\n";
-	for (size_t i = 0; i < nMatches; i++)
-		cout << "idx["<< i << "]=" << ret_matches[i].first << " dist["<< i << "]=" << ret_matches[i].second << endl;
-	cout << "\n";
+	// cout << "radiusSearch(): radius=" << search_radius << " -> " << nMatches << " matches\n";
+	// for (size_t i = 0; i < nMatches; i++)
+	// 	cout << "idx["<< i << "]=" << ret_matches[i].first << " dist["<< i << "]=" << ret_matches[i].second << endl;
+	// cout << "\n";
 	return ret_matches;
 }
 
@@ -76,17 +76,22 @@ public:
 		vector<pair<size_t,float> > seeds = radiusSearch(index, eps, cloud, ind);
 		point_to_processed[index] = true;
 		reachability_dist[index] = UNDEFINED;
-
+		cout<<"inside expand cluster "<<index<<endl;
 		// assumption - distances returned are sorted
-		core_dist[index] = seeds[minPts-1].second;
+		if(seeds.size()>=minPts){
+			cout<<"size is "<<seeds.size()<<" "<<seeds[minPts-1].second<<endl;
+			core_dist[index] = seeds[minPts-1].second;
+		}
 
 		myfile<<index<<"\n";
 		myfile<<core_dist[index]<<"\n";
 		myfile<<reachability_dist[index]<<"\n";
 		myfile<<"\n";
 		priority_queue<pair<int, float>, vector<pair<int, float>>, Compare> pq;
-
+		string v = (core_dist[index]!=UNDEFINED?"1":"0");
+		cout<<core_dist[index]<<" "<<UNDEFINED<<" "<<v<<endl;
 		if(core_dist[index]!=UNDEFINED){
+			cout<<"here"<<endl;
 			update(seeds, index, pq, cloud, ind);
 			while(!pq.empty()){
 				pair<size_t,float> elem;
@@ -103,7 +108,10 @@ public:
 					point_to_processed[inde] = true;
 
 					// assumptions - distances returned are sorted
-					core_dist[inde] = result[minPts-1].second;
+					if(result.size()>=minPts){
+						cout<<"size is "<<result.size()<<endl;
+						core_dist[inde] = result[minPts-1].second;
+					}
 
 					myfile<<inde<<"\n";
 					myfile<<core_dist[inde]<<"\n";
@@ -114,15 +122,19 @@ public:
 				}
 			}
 		}
+		cout<<"expand cluster ended"<<endl;
 		
 	}
 
 
-	void update(vector<pair<size_t,float> > seeds, int index, priority_queue<pair<int, float>, vector<pair<int, float>>, Compare>& pq, PointCloud<float>& cloud, my_kd_tree_t& ind){
+	void update(vector<pair<size_t,float> >& seeds, int index, priority_queue<pair<int, float>, vector<pair<int, float>>, Compare>& pq, PointCloud<float>& cloud, my_kd_tree_t& ind){
 		float c_dist = core_dist[index];
+		cout<<"inside update"<<endl;
 		for (auto &elem:seeds){
-			if(!point_to_processed[index]){
+			cout<<elem.first<<" "<<point_to_processed[elem.first]<<endl;
+			if(!point_to_processed[elem.first]){
 				float new_r_dist = max(c_dist, elem.second);
+				cout<<elem.first<<" "<<new_r_dist<<endl;
 				if(reachability_dist[elem.first]==UNDEFINED){
 					reachability_dist[elem.first] = new_r_dist;
 					pair<int, float> tem = make_pair(elem.first, new_r_dist);
