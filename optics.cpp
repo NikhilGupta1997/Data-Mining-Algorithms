@@ -18,23 +18,23 @@ const float UNDEFINED = -1.0;
 ofstream myfile ("optics.txt");
 
 typedef KDTreeSingleIndexAdaptor<
-		L2_Simple_Adaptor<float, PointCloud<float> > ,
-		PointCloud<float>, 3 /* dim */ > my_kd_tree_t;
+		L2_Simple_Adaptor<float, PointCloud5<float> > ,
+		PointCloud5<float>, 5 /* dim */ > my_kd_tree_t;
 
-vector<std::pair<size_t,float> > radiusSearch(int index, float epsilon, PointCloud<float>& cloud, my_kd_tree_t &ind) {
+vector<std::pair<size_t,float> > radiusSearch(int index, float epsilon, PointCloud5<float>& cloud, my_kd_tree_t &ind) {
 	const float search_radius = static_cast<float>(epsilon);
 	std::vector<std::pair<size_t,float> >   ret_matches;
 
 	nanoflann::SearchParams params;
 	//params.sorted = false;
 
-	const float query_pt[3] = {cloud.pts[index].x, cloud.pts[index].y, cloud.pts[index].z};
+	const float query_pt[5] = {cloud.pts[index].v, cloud.pts[index].w, cloud.pts[index].x, cloud.pts[index].y, cloud.pts[index].z};
 	const size_t nMatches = ind.radiusSearch(&query_pt[0], search_radius, ret_matches, params);
 
-	cout << "radiusSearch(): radius=" << search_radius << " -> " << nMatches << " matches\n";
-	for (size_t i = 0; i < nMatches; i++)
-		cout << "idx["<< i << "]=" << ret_matches[i].first << " dist["<< i << "]=" << ret_matches[i].second << endl;
-	cout << "\n";
+	// cout << "radiusSearch(): radius=" << search_radius << " -> " << nMatches << " matches\n";
+	// for (size_t i = 0; i < nMatches; i++)
+	// 	cout << "idx["<< i << "]=" << ret_matches[i].first << " dist["<< i << "]=" << ret_matches[i].second << endl;
+	// cout << "\n";
 	return ret_matches;
 }
 
@@ -53,7 +53,7 @@ private:
 	vector<float> reachability_dist;
 
 public:
-	Optics(int minPts, double eps, PointCloud<float>& cloud, my_kd_tree_t& ind){
+	Optics(int minPts, double eps, PointCloud5<float>& cloud, my_kd_tree_t& ind){
 		this->minPts = minPts;
 		this->eps = eps;
 		int size = cloud.pts.size();
@@ -72,7 +72,7 @@ public:
 	}
 
 	// write custom operator for queue as well
-	bool expand_cluster(int index, PointCloud<float>& cloud, my_kd_tree_t& ind){
+	void expand_cluster(int index, PointCloud5<float>& cloud, my_kd_tree_t& ind){
 		vector<pair<size_t,float> > seeds = radiusSearch(index, eps, cloud, ind);
 		point_to_processed[index] = true;
 		reachability_dist[index] = UNDEFINED;
@@ -113,12 +113,11 @@ public:
 						update(result, inde, pq, cloud, ind);
 				}
 			}
-		}
-		
+		} 
 	}
 
 
-	void update(vector<pair<size_t,float> > seeds, int index, priority_queue<pair<int, float>, vector<pair<int, float>>, Compare>& pq, PointCloud<float>& cloud, my_kd_tree_t& ind){
+	void update(vector<pair<size_t,float> > seeds, int index, priority_queue<pair<int, float>, vector<pair<int, float>>, Compare>& pq, PointCloud5<float>& cloud, my_kd_tree_t& ind){
 		float c_dist = core_dist[index];
 		for (auto &elem:seeds){
 			if(!point_to_processed[index]){
@@ -169,7 +168,7 @@ int main(int argc, char **argv){
 	string filename = argv[3];
 
     srand(static_cast<unsigned int>(time(nullptr)));
-  	PointCloud<float> cloud;
+  	PointCloud5<float> cloud;
   	
 	std::ifstream file(filename);
 	
@@ -178,9 +177,9 @@ int main(int argc, char **argv){
 	while(file >> row) {
     	points.push_back(row.val());
 	}
-	addpoints(cloud, points);
+	addpoints5(cloud, points);
 
-	my_kd_tree_t index(3 /*dim*/, cloud, KDTreeSingleIndexAdaptorParams(10 /* max leaf */) );	
+	my_kd_tree_t index(5 /*dim*/, cloud, KDTreeSingleIndexAdaptorParams(10 /* max leaf */) );	
 	index.buildIndex();
 	
 	Optics op(minpoints, epsilon, cloud, index);
