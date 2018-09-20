@@ -9,12 +9,13 @@
 #include <fstream>
 #include <set>
 #include <queue>
-#include <priority_queue>
+#include <algorithm>
 
 using namespace std;
 using namespace nanoflann;
 
-const float UNDEFINED = -1.0
+const float UNDEFINED = -1.0;
+ofstream myfile ("optics.txt");
 
 typedef KDTreeSingleIndexAdaptor<
 		L2_Simple_Adaptor<float, PointCloud<float> > ,
@@ -37,6 +38,12 @@ vector<std::pair<size_t,float> > radiusSearch(int index, float epsilon, PointClo
 	return ret_matches;
 }
 
+struct Compare{
+	constexpr bool operator()(pair<int, float> const & t1, pair<int, float> const & t2) const noexcept{
+		return t1.second>t2.second;
+	}
+};
+
 class Optics{
 private:
 	int minPts;
@@ -46,7 +53,7 @@ private:
 	vector<float> reachability_dist;
 
 public:
-	Optics(int minPts, double eps, PointCloud<float>& cloud, my_kd_tree_t& ind, ofstream myfile){
+	Optics(int minPts, double eps, PointCloud<float>& cloud, my_kd_tree_t& ind){
 		this->minPts = minPts;
 		this->eps = eps;
 		int size = cloud.pts.size();
@@ -58,20 +65,19 @@ public:
 		// clusters.resize(1);
 		for(int i=0;i<size;i++){
 			if(!point_to_processed[i]){
-				expand_cluster(i, cloud, ind, myfile);
+				expand_cluster(i, cloud, ind);
 			}
 		}
 
 	}
 
 	// write custom operator for queue as well
-	bool expand_cluster(int index, PointCloud<float>& cloud, my_kd_tree_t& ind, ofstream myfile){
+	bool expand_cluster(int index, PointCloud<float>& cloud, my_kd_tree_t& ind){
 		vector<pair<size_t,float> > seeds = radiusSearch(index, eps, cloud, ind);
 		point_to_processed[index] = true;
 		reachability_dist[index] = UNDEFINED;
 
-		// check this and write custom operator
-		sort(seeds.begin(), seeds.end());
+		// assumption - distances returned are sorted
 		core_dist[index] = seeds[minPts-1].second;
 
 		myfile<<index<<"\n";
@@ -96,8 +102,7 @@ public:
 					vector<pair<size_t,float> > result = radiusSearch(inde, eps, cloud, ind);
 					point_to_processed[inde] = true;
 
-					// check this and write custom operator
-					sort(result.begin(), result.end());
+					// assumptions - distances returned are sorted
 					core_dist[inde] = result[minPts-1].second;
 
 					myfile<<inde<<"\n";
@@ -117,7 +122,7 @@ public:
 		float c_dist = core_dist[index];
 		for (auto &elem:seeds){
 			if(!point_to_processed[index]){
-				float new_r_dist = max(core_dist, elem.second);
+				float new_r_dist = max(c_dist, elem.second);
 				if(reachability_dist[elem.first]==UNDEFINED){
 					reachability_dist[elem.first] = new_r_dist;
 					pair<int, float> tem = make_pair(elem.first, new_r_dist);
@@ -177,8 +182,8 @@ int main(int argc, char **argv){
 
 	my_kd_tree_t index(3 /*dim*/, cloud, KDTreeSingleIndexAdaptorParams(10 /* max leaf */) );	
 	index.buildIndex();
-	ofstream myfile ("optics.txt");
-	Optics op(minpoints, epsilon, cloud, index, myfile);
+	
+	Optics op(minpoints, epsilon, cloud, index);
 	myfile.close();
 
 	
