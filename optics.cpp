@@ -71,9 +71,16 @@ public:
 		point_to_processed[index] = true;
 		reachability_dist[index] = UNDEFINED;
 		// assumption - distances returned are sorted
-		if(seeds.size()>=minPts){
-			core_dist[index] = seeds[core_index].second;
+		cout<<"seeds is "<<endl;
+		for(int i=0;i<seeds.size();i++){
+			cout<<seeds[i].first<<" "<<seeds[i].second<<endl;
 		}
+		cout<<endl;
+		if(seeds.size()>=minPts){
+			core_dist[index] = seeds[core_index-1].second;
+		}
+		else
+			core_dist[index] = UNDEFINED;
 
 		myfile<<index<<" ";
 		// myfile<<core_dist[index]<<"\n";
@@ -95,11 +102,18 @@ public:
 					int inde = elem.first;
 					vector<pair<size_t,float> > result = radiusSearch(inde, eps, cloud, ind);
 					point_to_processed[inde] = true;
+					cout<<"result is "<<endl;
+					for(int i=0;i<result.size();i++){
+						cout<<result[i].first<<" "<<result[i].second<<endl;
+					}
+					cout<<endl;
 
 					// assumptions - distances returned are sorted
 					if(result.size()>=minPts){
-						core_dist[inde] = result[core_index].second;
+						core_dist[inde] = result[core_index-1].second;
 					}
+					else
+						core_dist[inde] = UNDEFINED;
 
 					myfile<<inde<<" ";
 					// myfile<<core_dist[inde]<<"\n";
@@ -111,9 +125,9 @@ public:
 		} 
 	}
 
-	void update(vector<pair<size_t,float> > seeds, int index, priority_queue<pair<int, float>, vector<pair<int, float>>, Compare>& pq, PointCloud5<float>& cloud, my_kd_tree_t& ind){
+	void update(vector<pair<size_t,float> >& seeds, int index, priority_queue<pair<int, float>, vector<pair<int, float>>, Compare>& pq, PointCloud5<float>& cloud, my_kd_tree_t& ind){
 		float c_dist = core_dist[index];
-		for (auto &elem:seeds){
+		for (auto elem:seeds){
 			if(!point_to_processed[elem.first]){
 				float new_r_dist = max(c_dist, elem.second);
 				if(reachability_dist[elem.first]==UNDEFINED){
