@@ -26,6 +26,9 @@ for i, inds in enumerate(cluster_inds):
 	print count, len(inds)
 	x_val = X[inds]
 	y_val = Y[inds]
-	plt.scatter(x_val, y_val, c=color[(i%7)], s=2, edgecolor=color[(i%6+1)])
+	if i+1 == len(cluster_inds):
+		plt.scatter(x_val, y_val, c='black', s=2, edgecolor='black')
+	else:
+		plt.scatter(x_val, y_val, c=color[(i%7)], s=2, edgecolor=color[(i%6+1)])
 
 plt.show()

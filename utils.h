@@ -270,13 +270,14 @@ void addpoints5(PointCloud5<T> &point, std::vector<std::vector<T>> val)
 	int N = val.size();
 	point.pts.resize(N);
 	for (size_t i = 0; i < N; i++)
-	{
+	{	
 		point.pts[i].v = val[i][0];
 		point.pts[i].w = val[i][1];
 		point.pts[i].x = val[i][2];
 		point.pts[i].y = val[i][3];
 		point.pts[i].z = val[i][4];
 		// std::cout << val[i][0]<< " " << val[i][1] << " " << val[i][2] << " " << val[i][3] << " " << val[i][4]<<std::endl;
+		// std::cout << val[i].size() << std::endl;
 	}
 }
 

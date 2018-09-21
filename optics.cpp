@@ -71,11 +71,11 @@ public:
 		point_to_processed[index] = true;
 		reachability_dist[index] = UNDEFINED;
 		// assumption - distances returned are sorted
-		cout<<"seeds is "<<endl;
-		for(int i=0;i<seeds.size();i++){
-			cout<<seeds[i].first<<" "<<seeds[i].second<<endl;
-		}
-		cout<<endl;
+		// cout<<"seeds is "<<endl;
+		// for(int i=0;i<seeds.size();i++){
+		// 	cout<<seeds[i].first<<" "<<seeds[i].second<<endl;
+		// }
+		// cout<<endl;
 		if(seeds.size()>=minPts){
 			core_dist[index] = seeds[core_index-1].second;
 		}
@@ -102,11 +102,11 @@ public:
 					int inde = elem.first;
 					vector<pair<size_t,float> > result = radiusSearch(inde, eps, cloud, ind);
 					point_to_processed[inde] = true;
-					cout<<"result is "<<endl;
-					for(int i=0;i<result.size();i++){
-						cout<<result[i].first<<" "<<result[i].second<<endl;
-					}
-					cout<<endl;
+					// cout<<"result is "<<endl;
+					// for(int i=0;i<result.size();i++){
+					// 	cout<<result[i].first<<" "<<result[i].second<<endl;
+					// }
+					// cout<<endl;
 
 					// assumptions - distances returned are sorted
 					if(result.size()>=minPts){
@@ -163,6 +163,14 @@ public:
 
 };
 
+vector<coord> pad(vector<coord> v) {
+	int len = v.size();
+	for(int i = 0; i < 5 - len; i++) {
+		v.push_back(0);
+	}
+	return v;
+}
+
 
 int main(int argc, char **argv){
 	cout << "You have entered " << argc 
@@ -183,7 +191,7 @@ int main(int argc, char **argv){
 	vector<vector<coord>> points;
   	CSVRow row;
 	while(file >> row) {
-    	points.push_back(row.val());
+    	points.push_back(pad(row.val()));
 	}
 	addpoints5(cloud, points);
 

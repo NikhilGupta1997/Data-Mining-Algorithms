@@ -17,7 +17,10 @@ with open(file, 'w') as f:
 
     np.random.seed(0)
 
-    X, y = datasets.make_circles(n_samples=int(0.85*size), noise=.1, factor=0.5)
+    # make_moons(n_samples=int(0.85*size), noise=0.3, random_state=0)
+
+    # X, y = datasets.make_circles(n_samples=int(0.85*size), noise=.1, factor=0.5)
+    X, y = datasets.make_moons(n_samples=int(0.85*size), noise=0.07, random_state=0)
     for val in X:
         f.write(str(val[0]*1200) + ' ' + str(val[1]*1000) + '\n')
 
@@ -36,7 +39,7 @@ with open(file, 'w') as f:
     plt.ylabel("$x_2$")
 
     
-    X, y = datasets.make_blobs(n_samples=int(0.15*size), centers=1, n_features=2, random_state=0, cluster_std=50, center_box=(79.0, 80.0))
+    X, y = datasets.make_blobs(n_samples=int(0.15*size), centers=1, n_features=2, random_state=0, cluster_std=50, center_box=(500.0, 510.0))
     reds = y == 0
     for val in X:
         f.write(str(val[0]) + ' ' + str(val[1]) + '\n')
