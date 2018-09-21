@@ -18,7 +18,7 @@ for line in open(clusters, 'r').readlines():
 	elif '#' not in line:
 		inds.append(int(line.strip()))
 
-color = {4: 'red', 1: 'blue', 2: 'green', 3: 'yellow', 0: 'black', 5: 'cyan', 6: 'magenta', }
+color = {4: 'red', 1: 'blue', 2: 'green', 3: 'yellow', 6: 'black', 0: 'cyan', 5: 'magenta', }
 plt.figure()
 count = 0
 for i, inds in enumerate(cluster_inds):

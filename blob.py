@@ -36,7 +36,7 @@ with open(file, 'w') as f:
     plt.ylabel("$x_2$")
 
     
-    X, y = datasets.make_blobs(n_samples=int(0.15*size), centers=1, n_features=2, random_state=0, cluster_std=50, center_box=(0.0, 1.0))
+    X, y = datasets.make_blobs(n_samples=int(0.15*size), centers=1, n_features=2, random_state=0, cluster_std=50, center_box=(79.0, 80.0))
     reds = y == 0
     for val in X:
         f.write(str(val[0]) + ' ' + str(val[1]) + '\n')
