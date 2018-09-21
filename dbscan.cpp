@@ -651,6 +651,7 @@ int main(int argc, char **argv) {
 
 	int minpoints = stoi(argv[1]);
 	float epsilon = stof(argv[2]);
+	epsilon = epsilon*epsilon;
 	string filename = argv[3];
 
 	std::ifstream file(filename);

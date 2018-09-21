@@ -19,7 +19,7 @@ for i, line in enumerate(open(file).readlines()):
 	idx = int(val[0])
 	dist = float(val[1])
 	if dist < 0.0:
-		dist = epsilon
+		dist = epsilon*epsilon
 		buff.append(idx)
 		if len(inds) > 100*minpts:
 			cluster_inds.append(inds)
@@ -39,11 +39,11 @@ noise.extend(inds)
 plt.figure()
 plt.plot(X, Y)
 plt.legend()
-plt.xlabel('bar number')
-plt.ylabel('bar height')
+plt.xlabel('Point ID')
+plt.ylabel('Reachability Distance')
 plt.xticks([])
 
-plt.title('Epic Graph\nAnother Line! Whoa')
+plt.title('Reachability Graph')
 
 # plt.show()
 
