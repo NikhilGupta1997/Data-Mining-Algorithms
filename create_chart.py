@@ -49,7 +49,6 @@ plt.title('Reachability Graph')
 
 dataset = sys.argv[3]
 data = np.array([val.strip().split() for val in open(dataset, 'r').readlines()])
-print data.shape
 if data.shape[1] == 2:
 	X = data[:, 0]
 	Y = data[:, 1]
@@ -59,14 +58,14 @@ if data.shape[1] == 2:
 	count = 0
 	for i, inds in enumerate(cluster_inds):
 		count += len(inds)
-		print count, len(inds)
+		print(count, len(inds))
 		x_val = X[inds]
 		y_val = Y[inds]
 		plt.scatter(x_val, y_val, c=color[(i%6+1)], s=2, edgecolor=color[(i%6+1)])
 
 	# print noise
 	count += len(noise)
-	print count, len(noise)
+	print(count, len(noise))
 	x_val = X[noise]
 	y_val = Y[noise]
 	plt.scatter(x_val, y_val, c='black', s=2)

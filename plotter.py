@@ -23,7 +23,7 @@ plt.figure()
 count = 0
 for i, inds in enumerate(cluster_inds):
 	count += len(inds)
-	print count, len(inds)
+	print(count, len(inds))
 	x_val = X[inds]
 	y_val = Y[inds]
 	if i+1 == len(cluster_inds):
