@@ -1,6 +1,10 @@
 import sys
 import networkx as nx
 from networkx.algorithms import isomorphism as iso
+from sklearn import svm
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score
 
 def create_graph_dictionary(filename):
     f = open(filename, 'r')
@@ -94,8 +98,8 @@ for graph_id in negative_list:
 labels = [ 1 for x in range(len(positive_list)) ]
 labels_neg = [ 0 for x in range(len(negative_list)) ]
 labels.extend(labels_neg)
-features = [ x for x in list(positive_features.values()) ]
-features_neg = [ x for x in list(negative_features.values()) ]
+features = list(positive_features.values()) 
+features_neg = list(negative_features.values())
 features.extend(features_neg)
 
 IDF = True
@@ -112,5 +116,25 @@ if IDF:
         for i in range(feature_length):
             ft[i] = float(ft[i]* f_w[i])
 
-for i in range(100):
-    print(features[i])
+
+# features,labels = np.arange(len(features)).reshape((len(features), feature_length)), range(len(features))
+
+# features = np.arange(len(features)*feature_length).reshape((len(features), feature_length))
+features = np.array(features).reshape((len(features), feature_length))
+labels = np.array(labels)
+print(features)
+print("------------")
+print(labels)
+X_train, X_test, Y_train, Y_test = train_test_split(features,labels, test_size = 0.3, random_state = 69)
+clf = svm.SVC()
+clf.fit(X_train,Y_train)
+Y_pred = clf.predict(X_test)
+print(Y_pred)
+print("---------------------------")
+print(Y_test)
+print("f1 score is ", f1_score(Y_test, Y_pred))
+
+
+
+# for i in range(100):
+#     print(features[i])
