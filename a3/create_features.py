@@ -5,8 +5,49 @@ from sklearn import svm
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
+from subprocess import call
 
-def create_graph_dictionary(filename):
+def create_all_graph_dictionary(filename, pos_set, neg_set, outfile):
+    f = open(filename, 'r')
+    data = f.readlines()
+    li = 0
+    graph_dict = {}
+    pos_list = []
+    neg_list = []
+    while li < len(data):
+        if len(data[li].strip()) == 0:
+            li+=1
+            continue
+        graph_id = int(data[li].strip().split(' ')[2])
+        if graph_id in pos_set:
+            pos_list.append(graph_id)
+            start = li
+        elif graph_id in neg_set:
+            neg_list.append(graph_id)
+            start = li
+        else:
+            li+=1
+            while li<len(data) and len(data[li].strip())!=0 and data[li][0] != 't':
+                li+=1
+            continue
+
+        G = nx.Graph()
+        li+=1
+        while li<len(data) and len(data[li].strip())!=0 and data[li][0] != 't':
+            if data[li][0] == 'v': # Found a vertex
+                data_list = data[li].strip().split(' ')
+                G.add_node(int(data_list[1]), node_id=int(data_list[2]))
+            elif data[li][0] == 'e': # Found an edge
+                data_list = data[li].strip().split(' ')
+                G.add_edge(int(data_list[1]), int(data_list[2]), edge_id=int(data_list[3]))
+            li+=1
+        for line in data[start:li]:
+            outfile.write(line)
+        graph_dict[graph_id] = G
+    f.close()
+    return [graph_dict, pos_list, neg_list]
+
+def create_frequent_graph_dictionary(filename):
     f = open(filename, 'r')
     data = f.readlines()
     li = 0
@@ -36,30 +77,42 @@ def get_ids(filename):
     f.close()
     return ids
 
-graph_file = sys.argv[1]
-pfile = sys.argv[2]
-nfile = sys.argv[3]
-frequent_graphs = sys.argv[4]
+graph_file = sys.argv[1].strip()
+pfile = sys.argv[2].strip()
+nfile = sys.argv[3].strip()
+support = sys.argv[4].strip()
+frequent_graphs = graph_file+'.temp.fp'
+current_dir='/'.join(sys.argv[0].split('/')[:-1])
+if current_dir == '':
+    current_dir = '.'
+print("Reading positive graph ids")
+positive_set = set(get_ids(pfile))
+print("Reading negative graph ids")
+negative_set = set(get_ids(nfile))
 
 print("Generating dictionary for all graphs in dataset")
-all_graphs = create_graph_dictionary(graph_file)
+new_graph_file = open(graph_file+'.temp', 'w')
+[all_graphs, positive_list, negative_list] = create_all_graph_dictionary(graph_file, positive_set, negative_set, new_graph_file)
+new_graph_file.close()
 print("Total graphs read:", len(all_graphs))
-
-print("Reading positive graph ids")
-positive_list = [ x for x in get_ids(pfile) if (x in all_graphs) ]
 print("Total positive ids:", len(positive_list))
-print("Reading negative graph ids")
-negative_list = [ x for x in get_ids(nfile) if (x in all_graphs) ]
 print("Total negative ids:", len(negative_list))
 
+print("Creating frequent subgraphs using gSpan, support:", support)
+call([(current_dir+"/libraries/gSpan"), "-f", (graph_file+'.temp'), "-s", support.strip(), "-o"])
+
 print("Reading feature graphs")
-feature_graphs = list(create_graph_dictionary(frequent_graphs).values())
+feature_graphs = list(create_frequent_graph_dictionary(frequent_graphs).values())
 feature_length = len(feature_graphs)
 print("Total Features:", feature_length)
 
 print("Generating positive graphs with features")
 positive_features = {}
+count = 0
 for graph_id in positive_list:
+    if count%100 == 0:
+        print (count)
+    count+=1
     f_v = []
     for feature_graph in feature_graphs:
         graph_match = iso.GraphMatcher(
@@ -111,30 +164,19 @@ if IDF:
         freq = 0
         for ft in features:
             freq += ft[i]
-        f_w.append(float(total_labels)/freq)
+        if freq == 0:
+            f_w.append(0)
+        else:
+            f_w.append(float(total_labels)/freq)
     for ft in features:
         for i in range(feature_length):
             ft[i] = float(ft[i]* f_w[i])
 
 
-# features,labels = np.arange(len(features)).reshape((len(features), feature_length)), range(len(features))
-
-# features = np.arange(len(features)*feature_length).reshape((len(features), feature_length))
 features = np.array(features).reshape((len(features), feature_length))
 labels = np.array(labels)
-print(features)
-print("------------")
-print(labels)
 X_train, X_test, Y_train, Y_test = train_test_split(features,labels, test_size = 0.3, random_state = 69)
 clf = svm.SVC()
 clf.fit(X_train,Y_train)
 Y_pred = clf.predict(X_test)
-print(Y_pred)
-print("---------------------------")
-print(Y_test)
 print("f1 score is ", f1_score(Y_test, Y_pred))
-
-
-
-# for i in range(100):
-#     print(features[i])
