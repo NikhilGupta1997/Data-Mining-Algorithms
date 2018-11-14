@@ -2,7 +2,7 @@
 ## Helper Variables
 INPUT_FILE="$1"
 WORK_DIR="$(dirname $0)"
-TEMP_G_FILE=$(mktemp "${WORK_DIR}/gfile_XXXX")
+TEMP_G_FILE="$1.translated"
 TEMP_F_FILE=$(mktemp "${WORK_DIR}/ffile_XXXX")
 TIME_FILE=$(mktemp "${WORK_DIR}/timings_XXXX")
 TIME_1_FILE=$(mktemp "${WORK_DIR}/timings_XXXX")
@@ -11,8 +11,9 @@ NUM_GRAPHS=$(grep '^#' ${INPUT_FILE} | wc -l | tr -d ' ')
 
 ## Translate input file to required formats
 echo "Translating input file for gSpan, fsg and gaston formats"
-python3 translate_file.py "${INPUT_FILE}" > "${TEMP_G_FILE}"
+python3 translate_file.py "${INPUT_FILE}"
 cat "${TEMP_G_FILE}" | sed 's/e/u/g'      > "${TEMP_F_FILE}"
+exit(0)
 
 ## Time all binaries
 for val in ${SUPPORT_VALUES}; do

@@ -47,11 +47,11 @@ def create_all_graph_dictionary(filename, pos_set, neg_set, outfile):
     f.close()
     return [graph_dict, pos_list, neg_list]
 
-def create_frequent_graph_dictionary(filename):
+def create_graph_list(filename):
     f = open(filename, 'r')
     data = f.readlines()
     li = 0
-    graph_dict = {}
+    graph_list = []
     while li < len(data):
         if len(data[li].strip()) == 0:
             li+=1
@@ -67,9 +67,28 @@ def create_frequent_graph_dictionary(filename):
                 data_list = data[li].strip().split(' ')
                 G.add_edge(int(data_list[1]), int(data_list[2]), edge_id=int(data_list[3]))
             li+=1
-        graph_dict[graph_id] = G
+        graph_list.append(G)
     f.close()
-    return graph_dict
+    return graph_list
+
+def IDF(features):
+    print("Performing IDF")
+    total_labels = len(features)
+    if total_labels == 0:
+        return
+    feature_length = len(features[0])
+    f_w = []
+    for i in range(feature_length):
+        freq = 0
+        for ft in features:
+            freq += ft[i]
+        if freq == 0:
+            f_w.append(0)
+        else:
+            f_w.append(float(total_labels)/freq)
+    for ft in features:
+        for i in range(feature_length):
+            ft[i] = float(ft[i]* f_w[i])
 
 def get_ids(filename):
     f = open(filename, 'r')
@@ -80,7 +99,7 @@ def get_ids(filename):
 graph_file = sys.argv[1].strip()
 pfile = sys.argv[2].strip()
 nfile = sys.argv[3].strip()
-support = sys.argv[4].strip()
+testset_file = sys.argv[4].strip()
 frequent_graphs = graph_file+'.temp.fp'
 current_dir='/'.join(sys.argv[0].split('/')[:-1])
 if current_dir == '':
@@ -94,17 +113,49 @@ print("Generating dictionary for all graphs in dataset")
 new_graph_file = open(graph_file+'.temp', 'w')
 [all_graphs, positive_list, negative_list] = create_all_graph_dictionary(graph_file, positive_set, negative_set, new_graph_file)
 new_graph_file.close()
-print("Total graphs read:", len(all_graphs))
+print("Total train graphs read:", len(all_graphs))
 print("Total positive ids:", len(positive_list))
 print("Total negative ids:", len(negative_list))
+test_graphs = create_graph_list(testset_file)
 
-print("Creating frequent subgraphs using gSpan, support:", support)
-call([(current_dir+"/libraries/gSpan"), "-f", (graph_file+'.temp'), "-s", support.strip(), "-o"])
+support_list = [ 0.05*(x+4) for x in range(7) ]
+support_list_2 = [ 0.025*(x+21) for x in range(18) ]
+support_list.extend(support_list_2)
+MAX_FEATURES = 50
+feature_graphs = []
+feature_length = 0
+for support in support_list:
+    print("Creating frequent subgraphs using gSpan, support:", support)
+    call([(current_dir+"/libraries/gSpan"), "-f", (graph_file+'.temp'), "-s", str(support), "-o"])
+    
+    print("Reading feature graphs")
+    feature_graphs = create_graph_list(frequent_graphs)
+    feature_length = len(feature_graphs)
+    print("Total Features:", feature_length, ", Support:", support)
+    if feature_length < MAX_FEATURES:
+        print("Chosen Feature Length:", feature_length, ", Support:", support)
+        break
 
-print("Reading feature graphs")
-feature_graphs = list(create_frequent_graph_dictionary(frequent_graphs).values())
-feature_length = len(feature_graphs)
-print("Total Features:", feature_length)
+print("Generating features for test graphs")
+test_features = []
+count = 0
+for test_graph in test_graphs:
+    if count%100 == 0:
+        print (count)
+    count+=1
+    f_v = []
+    for feature_graph in feature_graphs:
+        graph_match = iso.GraphMatcher(
+                test_graph,
+                feature_graph,
+                node_match = lambda x, y: x['node_id'] == y['node_id'],
+                edge_match = lambda x, y: x['edge_id'] == y['edge_id']
+                )
+        if(graph_match.subgraph_is_isomorphic()):
+            f_v.append(1)
+        else:
+            f_v.append(0)
+    test_features.append(f_v)
 
 print("Generating positive graphs with features")
 positive_features = {}
@@ -154,29 +205,40 @@ labels.extend(labels_neg)
 features = list(positive_features.values()) 
 features_neg = list(negative_features.values())
 features.extend(features_neg)
+IDF(features)
+IDF(test_features)
+print('Writing train file')
+with open('train.txt', 'w') as f:
+    for i in range(len(features)):
+        f.write(str(int(labels[i])*2-1))
+        f_v = features[i]
+        for j in range(len(f_v)):
+            if f_v[j] == 0:
+                continue
+            f.write(' ')
+            f.write(str(j))
+            f.write(':')
+            f.write(str(f_v[j]))
+        f.write('\n') 
 
-IDF = True
-if IDF:
-    print("Performing IDF")
-    f_w = []
-    total_labels = len(labels)
-    for i in range(feature_length):
-        freq = 0
-        for ft in features:
-            freq += ft[i]
-        if freq == 0:
-            f_w.append(0)
-        else:
-            f_w.append(float(total_labels)/freq)
-    for ft in features:
-        for i in range(feature_length):
-            ft[i] = float(ft[i]* f_w[i])
+print('Writing test file')
+with open('test.txt', 'w') as f:
+    for i in range(len(test_features)):
+        f_v = test_features[i]
+        for j in range(len(f_v)):
+            if f_v[j] == 0:
+                continue
+            if j!=0:
+                f.write(' ')
+            f.write(str(j))
+            f.write(':')
+            f.write(str(f_v[j]))
+        f.write('\n')
 
-
-features = np.array(features).reshape((len(features), feature_length))
-labels = np.array(labels)
-X_train, X_test, Y_train, Y_test = train_test_split(features,labels, test_size = 0.3, random_state = 69)
-clf = svm.SVC()
-clf.fit(X_train,Y_train)
-Y_pred = clf.predict(X_test)
-print("f1 score is ", f1_score(Y_test, Y_pred))
+#    features = np.array(features).reshape((len(features), feature_length))
+#    labels = np.array(labels)
+#    X_train, X_test, Y_train, Y_test = train_test_split(features,labels, test_size = 0.3, random_state = 69)
+#    clf = svm.SVC()
+#    clf.fit(X_train,Y_train)
+#    Y_pred = clf.predict(X_test)
+#    print("f1 score is ", f1_score(Y_test, Y_pred))
