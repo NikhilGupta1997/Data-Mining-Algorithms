@@ -121,13 +121,13 @@ test_graphs = create_graph_list(testset_file)
 support_list = [ 0.05*(x+4) for x in range(7) ]
 support_list_2 = [ 0.025*(x+21) for x in range(18) ]
 support_list.extend(support_list_2)
-MAX_FEATURES = 50
+MAX_FEATURES = 120
 feature_graphs = []
 feature_length = 0
 for support in support_list:
     print("Creating frequent subgraphs using gSpan, support:", support)
     call([(current_dir+"/libraries/gSpan"), "-f", (graph_file+'.temp'), "-s", str(support), "-o"])
-    
+ 
     print("Reading feature graphs")
     feature_graphs = create_graph_list(frequent_graphs)
     feature_length = len(feature_graphs)
@@ -202,7 +202,7 @@ for graph_id in negative_list:
 labels = [ 1 for x in range(len(positive_list)) ]
 labels_neg = [ 0 for x in range(len(negative_list)) ]
 labels.extend(labels_neg)
-features = list(positive_features.values()) 
+features = list(positive_features.values())
 features_neg = list(negative_features.values())
 features.extend(features_neg)
 IDF(features)
@@ -219,7 +219,7 @@ with open('train.txt', 'w') as f:
             f.write(str(j))
             f.write(':')
             f.write(str(f_v[j]))
-        f.write('\n') 
+        f.write('\n')
 
 print('Writing test file')
 with open('test.txt', 'w') as f:
@@ -235,10 +235,16 @@ with open('test.txt', 'w') as f:
             f.write(str(f_v[j]))
         f.write('\n')
 
-#    features = np.array(features).reshape((len(features), feature_length))
-#    labels = np.array(labels)
-#    X_train, X_test, Y_train, Y_test = train_test_split(features,labels, test_size = 0.3, random_state = 69)
-#    clf = svm.SVC()
-#    clf.fit(X_train,Y_train)
-#    Y_pred = clf.predict(X_test)
-#    print("f1 score is ", f1_score(Y_test, Y_pred))
+# test_labels = []
+# with open(sys.argv[5], 'r') as f:
+#     test_labels = [ 2-int(x.strip()) for x in f.readlines() ]
+# features = np.array(features).reshape((len(features), feature_length))
+# test_features = np.array(test_features).reshape((len(test_features), feature_length))
+# labels = np.array(labels)
+# test_labels = np.array(test_labels)
+# clf = svm.SVC()
+# clf.fit(features,labels)
+# Y_pred = clf.predict(test_features)
+# print (Y_pred)
+# print( test_labels)
+# print("f1 score is ", f1_score(test_labels, Y_pred))
