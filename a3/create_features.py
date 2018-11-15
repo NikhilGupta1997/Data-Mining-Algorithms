@@ -128,10 +128,10 @@ print("Total positive ids:", len(positive_list))
 print("Total negative ids:", len(negative_list))
 test_graphs = create_graph_list(testset_file)
 
-support_list = [ 0.05*(x+4) for x in range(7) ]
+support_list = [ 0.05*(x+8) for x in range(3) ]
 support_list_2 = [ 0.025*(x+21) for x in range(18) ]
 support_list.extend(support_list_2)
-MAX_FEATURES = 120
+MAX_FEATURES = 50
 feature_graphs = []
 feature_length = 0
 for support in support_list:
