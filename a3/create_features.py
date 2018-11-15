@@ -1,10 +1,6 @@
 import sys
 import networkx as nx
 from networkx.algorithms import isomorphism as iso
-from sklearn import svm
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import f1_score
 from subprocess import call
 from concurrent import futures
 
@@ -87,7 +83,7 @@ def IDF(features, feature_graphs):
             f_w.append(0)
         else:
             wt = float(total_labels)/freq
-            if wt < 1.4:
+            if wt < 1.3:
                 wt = 0
             f_w.append(wt)
     print(f_w)
@@ -129,10 +125,8 @@ print("Total positive ids:", len(positive_list))
 print("Total negative ids:", len(negative_list))
 test_graphs = create_graph_list(testset_file)
 
-support_list = []#[ 0.05*(x+8) for x in range(3) ]
-support_list_2 = [ 0.025*(x+21) for x in range(18) ]
-support_list.extend(support_list_2)
-MAX_FEATURES = 100
+support_list = [ 0.05*(x+12) for x in range(8) ]
+MAX_FEATURES = 80
 feature_graphs = []
 feature_length = 0
 for support in support_list:
@@ -182,6 +176,7 @@ my_futures = [executor.submit(run_parallel,pos_lists[pid], feature_graphs, all_g
 futures.wait(my_futures)
 for ft in my_futures:
     positive_features.update(ft.result())
+executor.shutdown()
 print("Generating negative graphs with features")
 negative_features = {}
 pieces = int(len(negative_list)/4)
@@ -195,6 +190,7 @@ my_futures = [executor.submit(run_parallel,neg_lists[pid], feature_graphs, all_g
 futures.wait(my_futures)
 for ft in my_futures:
     negative_features.update(ft.result())
+executor.shutdown()
 
 labels = [ 1 for x in range(len(positive_list)) ]
 labels_neg = [ 0 for x in range(len(negative_list)) ]
@@ -241,6 +237,7 @@ my_futures = [executor.submit(run_test_parallel,t_lists[pid], feature_graphs, pi
 futures.wait(my_futures)
 for ft in my_futures:
     test_features.extend(ft.result())
+executor.shutdown()
 
 print('Writing train file')
 with open('train.txt', 'w') as f:
@@ -272,16 +269,16 @@ with open('test.txt', 'w') as f:
             f.write(str(f_v[j]))
         f.write('\n')
 
-test_labels = []
-with open(sys.argv[5], 'r') as f:
-    test_labels = [ 2-int(x.strip()) for x in f.readlines() ]
-features = np.array(features).reshape((len(features), feature_length))
-test_features = np.array(test_features).reshape((len(test_features), feature_length))
-labels = np.array(labels)
-test_labels = np.array(test_labels)
-clf = svm.SVC()
-clf.fit(features,labels)
-Y_pred = clf.predict(test_features)
-print (Y_pred)
-print( test_labels)
-print("f1 score is ", f1_score(test_labels, Y_pred))
+# test_labels = []
+# with open(sys.argv[5], 'r') as f:
+#     test_labels = [ 2-int(x.strip()) for x in f.readlines() ]
+# features = np.array(features).reshape((len(features), feature_length))
+# test_features = np.array(test_features).reshape((len(test_features), feature_length))
+# labels = np.array(labels)
+# test_labels = np.array(test_labels)
+# clf = svm.SVC()
+# clf.fit(features,labels)
+# Y_pred = clf.predict(test_features)
+# print (Y_pred)
+# print( test_labels)
+# print("f1 score is ", f1_score(test_labels, Y_pred))
