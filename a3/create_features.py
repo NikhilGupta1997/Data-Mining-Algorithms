@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from subprocess import call
+from concurrent import futures
 
 def create_all_graph_dictionary(filename, pos_set, neg_set, outfile):
     f = open(filename, 'r')
@@ -128,10 +129,10 @@ print("Total positive ids:", len(positive_list))
 print("Total negative ids:", len(negative_list))
 test_graphs = create_graph_list(testset_file)
 
-support_list = [ 0.05*(x+8) for x in range(3) ]
+support_list = []#[ 0.05*(x+8) for x in range(3) ]
 support_list_2 = [ 0.025*(x+21) for x in range(18) ]
 support_list.extend(support_list_2)
-MAX_FEATURES = 50
+MAX_FEATURES = 100
 feature_graphs = []
 feature_length = 0
 for support in support_list:
@@ -146,47 +147,54 @@ for support in support_list:
         print("Chosen Feature Length:", feature_length, ", Support:", support)
         break
 
+def run_parallel(item_list, feature_graphs, graphs_dict, pid):
+    features_dict = {}
+    count = 0
+    for graph_id in item_list:
+        if count%100 == 0:
+            print (pid, count)
+        count+=1
+        f_v = []
+        for feature_graph in feature_graphs:
+            graph_match = iso.GraphMatcher(
+                    graphs_dict[graph_id],
+                    feature_graph,
+                    node_match = lambda x, y: x['node_id'] == y['node_id'],
+                    edge_match = lambda x, y: x['edge_id'] == y['edge_id']
+                    )
+            if(graph_match.subgraph_is_isomorphic()):
+                f_v.append(1)
+            else:
+                f_v.append(0)
+        features_dict[graph_id] = f_v
+    return features_dict
+
 print("Generating positive graphs with features")
 positive_features = {}
-count = 0
-for graph_id in positive_list:
-    if count%100 == 0:
-        print (count)
-    count+=1
-    f_v = []
-    for feature_graph in feature_graphs:
-        graph_match = iso.GraphMatcher(
-                all_graphs[graph_id],
-                feature_graph,
-                node_match = lambda x, y: x['node_id'] == y['node_id'],
-                edge_match = lambda x, y: x['edge_id'] == y['edge_id']
-                )
-        if(graph_match.subgraph_is_isomorphic()):
-            f_v.append(1)
-        else:
-            f_v.append(0)
-    positive_features[graph_id] = f_v
-
+pieces = int(len(positive_list)/4)
+pos_lists = []
+pos_lists.append(positive_list[0:pieces])
+pos_lists.append(positive_list[pieces:2*pieces])
+pos_lists.append(positive_list[2*pieces:3*pieces])
+pos_lists.append(positive_list[3*pieces:])
+executor = futures.ProcessPoolExecutor(4)
+my_futures = [executor.submit(run_parallel,pos_lists[pid], feature_graphs, all_graphs, pid) for pid in range(4) ]
+futures.wait(my_futures)
+for ft in my_futures:
+    positive_features.update(ft.result())
 print("Generating negative graphs with features")
 negative_features = {}
-count = 0
-for graph_id in negative_list:
-    if count%100 == 0:
-        print (count)
-    count+=1
-    f_v = []
-    for feature_graph in feature_graphs:
-        graph_match = iso.GraphMatcher(
-                all_graphs[graph_id],
-                feature_graph,
-                node_match = lambda x, y: x['node_id'] == y['node_id'],
-                edge_match = lambda x, y: x['edge_id'] == y['edge_id']
-                )
-        if(graph_match.subgraph_is_isomorphic()):
-            f_v.append(1)
-        else:
-            f_v.append(0)
-    negative_features[graph_id] = f_v
+pieces = int(len(negative_list)/4)
+neg_lists = []
+neg_lists.append(negative_list[0:pieces])
+neg_lists.append(negative_list[pieces:2*pieces])
+neg_lists.append(negative_list[2*pieces:3*pieces])
+neg_lists.append(negative_list[3*pieces:])
+executor = futures.ProcessPoolExecutor(4)
+my_futures = [executor.submit(run_parallel,neg_lists[pid], feature_graphs, all_graphs, pid) for pid in range(4) ]
+futures.wait(my_futures)
+for ft in my_futures:
+    negative_features.update(ft.result())
 
 labels = [ 1 for x in range(len(positive_list)) ]
 labels_neg = [ 0 for x in range(len(negative_list)) ]
@@ -196,26 +204,43 @@ features_neg = list(negative_features.values())
 features.extend(features_neg)
 [features, feature_graphs] = IDF(features, feature_graphs)
 feature_length = len(feature_graphs)
+
+def run_test_parallel(test_graphs, feature_graphs, pid):
+    test_features = []
+    count = 0
+    for test_graph in test_graphs:
+        if count%100 == 0:
+            print (pid,count)
+        count+=1
+        f_v = []
+        for feature_graph in feature_graphs:
+            graph_match = iso.GraphMatcher(
+                    test_graph,
+                    feature_graph,
+                    node_match = lambda x, y: x['node_id'] == y['node_id'],
+                    edge_match = lambda x, y: x['edge_id'] == y['edge_id']
+                    )
+            if(graph_match.subgraph_is_isomorphic()):
+                f_v.append(1)
+            else:
+                f_v.append(0)
+        test_features.append(f_v)
+    return test_features
+
 print("Generating features for test graphs")
 test_features = []
-count = 0
-for test_graph in test_graphs:
-    if count%100 == 0:
-        print (count)
-    count+=1
-    f_v = []
-    for feature_graph in feature_graphs:
-        graph_match = iso.GraphMatcher(
-                test_graph,
-                feature_graph,
-                node_match = lambda x, y: x['node_id'] == y['node_id'],
-                edge_match = lambda x, y: x['edge_id'] == y['edge_id']
-                )
-        if(graph_match.subgraph_is_isomorphic()):
-            f_v.append(1)
-        else:
-            f_v.append(0)
-    test_features.append(f_v)
+pieces = int(len(test_graphs)/4)
+print(pieces)
+t_lists = []
+t_lists.append(test_graphs[0:pieces])
+t_lists.append(test_graphs[pieces:2*pieces])
+t_lists.append(test_graphs[2*pieces:3*pieces])
+t_lists.append(test_graphs[3*pieces:])
+executor = futures.ProcessPoolExecutor(4)
+my_futures = [executor.submit(run_test_parallel,t_lists[pid], feature_graphs, pid) for pid in range(4) ]
+futures.wait(my_futures)
+for ft in my_futures:
+    test_features.extend(ft.result())
 
 print('Writing train file')
 with open('train.txt', 'w') as f:
@@ -235,11 +260,13 @@ print('Writing test file')
 with open('test.txt', 'w') as f:
     for i in range(len(test_features)):
         f_v = test_features[i]
+        first = True
         for j in range(len(f_v)):
             if f_v[j] == 0:
                 continue
-            if j!=0:
+            if not first:
                 f.write(' ')
+            first = False
             f.write(str(j))
             f.write(':')
             f.write(str(f_v[j]))
