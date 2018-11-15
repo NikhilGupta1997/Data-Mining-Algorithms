@@ -9,7 +9,7 @@ WORK_DIR="$(dirname $0)"
 python3 "${WORK_DIR}/translate_file.py" "${TRAIN_FILE}" "${TEST_FILE}"
 
 # Create Features
-python3 "${WORK_DIR}/create_features.py" "${TRAIN_FILE}.translated" "${ACTIVE_FILE}" "${INACTIVE_FILE}" "${TEST_FILE}.translated"
+python3 "${WORK_DIR}/create_features.py" "${TRAIN_FILE}.translated" "${ACTIVE_FILE}" "${INACTIVE_FILE}" "${TEST_FILE}.translated" dataset/aido99_all_test_labels.txt
 
 # Clean up
 rm -f "${TRAIN_FILE}.translated" "${TEST_FILE}.translated"

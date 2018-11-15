@@ -71,7 +71,7 @@ def create_graph_list(filename):
     f.close()
     return graph_list
 
-def IDF(features):
+def IDF(features, feature_graphs):
     print("Performing IDF")
     total_labels = len(features)
     if total_labels == 0:
@@ -85,10 +85,20 @@ def IDF(features):
         if freq == 0:
             f_w.append(0)
         else:
-            f_w.append(float(total_labels)/freq)
-    for ft in features:
-        for i in range(feature_length):
-            ft[i] = float(ft[i]* f_w[i])
+            wt = float(total_labels)/freq
+            if wt < 1.4:
+                wt = 0
+            f_w.append(wt)
+    print(f_w)
+    new_features = [[] for x in range(total_labels)]
+    new_feature_graphs = []
+    for i in range(feature_length):
+        if f_w[i]!=0:
+            for j in range(total_labels):
+                new_features[j].append(features[j][i])
+            new_feature_graphs.append(feature_graphs[i])
+    print("New number of features:", len(new_feature_graphs))
+    return [new_features, new_feature_graphs]
 
 def get_ids(filename):
     f = open(filename, 'r')
@@ -135,27 +145,6 @@ for support in support_list:
     if feature_length < MAX_FEATURES:
         print("Chosen Feature Length:", feature_length, ", Support:", support)
         break
-
-print("Generating features for test graphs")
-test_features = []
-count = 0
-for test_graph in test_graphs:
-    if count%100 == 0:
-        print (count)
-    count+=1
-    f_v = []
-    for feature_graph in feature_graphs:
-        graph_match = iso.GraphMatcher(
-                test_graph,
-                feature_graph,
-                node_match = lambda x, y: x['node_id'] == y['node_id'],
-                edge_match = lambda x, y: x['edge_id'] == y['edge_id']
-                )
-        if(graph_match.subgraph_is_isomorphic()):
-            f_v.append(1)
-        else:
-            f_v.append(0)
-    test_features.append(f_v)
 
 print("Generating positive graphs with features")
 positive_features = {}
@@ -205,8 +194,29 @@ labels.extend(labels_neg)
 features = list(positive_features.values())
 features_neg = list(negative_features.values())
 features.extend(features_neg)
-IDF(features)
-IDF(test_features)
+[features, feature_graphs] = IDF(features, feature_graphs)
+feature_length = len(feature_graphs)
+print("Generating features for test graphs")
+test_features = []
+count = 0
+for test_graph in test_graphs:
+    if count%100 == 0:
+        print (count)
+    count+=1
+    f_v = []
+    for feature_graph in feature_graphs:
+        graph_match = iso.GraphMatcher(
+                test_graph,
+                feature_graph,
+                node_match = lambda x, y: x['node_id'] == y['node_id'],
+                edge_match = lambda x, y: x['edge_id'] == y['edge_id']
+                )
+        if(graph_match.subgraph_is_isomorphic()):
+            f_v.append(1)
+        else:
+            f_v.append(0)
+    test_features.append(f_v)
+
 print('Writing train file')
 with open('train.txt', 'w') as f:
     for i in range(len(features)):
@@ -235,16 +245,16 @@ with open('test.txt', 'w') as f:
             f.write(str(f_v[j]))
         f.write('\n')
 
-# test_labels = []
-# with open(sys.argv[5], 'r') as f:
-#     test_labels = [ 2-int(x.strip()) for x in f.readlines() ]
-# features = np.array(features).reshape((len(features), feature_length))
-# test_features = np.array(test_features).reshape((len(test_features), feature_length))
-# labels = np.array(labels)
-# test_labels = np.array(test_labels)
-# clf = svm.SVC()
-# clf.fit(features,labels)
-# Y_pred = clf.predict(test_features)
-# print (Y_pred)
-# print( test_labels)
-# print("f1 score is ", f1_score(test_labels, Y_pred))
+test_labels = []
+with open(sys.argv[5], 'r') as f:
+    test_labels = [ 2-int(x.strip()) for x in f.readlines() ]
+features = np.array(features).reshape((len(features), feature_length))
+test_features = np.array(test_features).reshape((len(test_features), feature_length))
+labels = np.array(labels)
+test_labels = np.array(test_labels)
+clf = svm.SVC()
+clf.fit(features,labels)
+Y_pred = clf.predict(test_features)
+print (Y_pred)
+print( test_labels)
+print("f1 score is ", f1_score(test_labels, Y_pred))
