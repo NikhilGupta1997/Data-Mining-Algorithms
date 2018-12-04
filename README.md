@@ -9,6 +9,8 @@ We provide support for the following algorithms on datasets ranging from 1 - 5 f
 + DBScan
 + OPTICS
 
+We credit [nanoflann](nanoflann) for its quick implementation in finding nearest-neighbors in KD trees.
+
 ## Frequent-Subgraph-Mining
 We support the implementation of the various subgraph-mining algorithm on graph datasets. We provide an example on the classification of active molecules in chemical compounds w.r.t. a particular disease.   
 The algorithms we implement are:
